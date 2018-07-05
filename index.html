@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>SHOOTER 2.0</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			html, body {
+				width: 100%;
+				height: 100%;
+			}
+			p {
+			  text-align: center;
+			  font-size: 20px;
+			  
+			}
+			body {
+				background-color: #ffffff;
+				margin: 0;
+				overflow: hidden;
+				font-family: arial;
+			}
+			#blocker {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0,0,0,0.5);
+			}
+			#instructions {
+				width: 100%;
+				height: 100%;
+				display: -webkit-box;
+				display: -moz-box;
+				display: box;
+				-webkit-box-orient: horizontal;
+				-moz-box-orient: horizontal;
+				box-orient: horizontal;
+				-webkit-box-pack: center;
+				-moz-box-pack: center;
+				box-pack: center;
+				-webkit-box-align: center;
+				-moz-box-align: center;
+				box-align: center;
+				color: #ffffff;
+				text-align: center;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		
+		<script src="js/Three.js"></script>
+		<script src="js/PointerLockControls.js"></script>
+        <script src="js/ObjectLoader.js"></script>
+		<script src="js/JSONLoader.js"></script>
+		<script >var points=0;
+		var score=100;
+		var spaceship1;
+			var spaceship2;</script>
+		<script>
+				var seconds=10;
+				var y1=(Math.floor(Math.random() * (100 - 20)) + 20);
+			    var y2=(Math.floor(Math.random() * (100 - 20)) + 20);
+				var x = setInterval(function() {
+		        
+					if(score<0)
+					{
+						score=score-10;
+						
+					}
+					else
+					
+					{
+					 seconds = seconds-1;
+					 
+					if(score==0)
+					{
+						seconds=5;
+					}
+					
+					if(seconds==0)
+					{
+						seconds=5;
+						score=score-20;
+					}
+					
+					if(score>150)
+					{
+							 y1=(Math.floor(Math.random() * (200 - 100)) + 100);
+							 y2=(Math.floor(Math.random() * (200 - 100)) + 100);
+							 score=score-20;
+							 points=points+100;
+					}
+					if(score>200)
+					{
+							y1=(Math.floor(Math.random() * (300 - 200)) + 200);
+							y2=(Math.floor(Math.random() * (300 - 200)) + 200);
+							score=score-30;
+							points=points+100;
+					
+					}
+					document.getElementById("demo").innerHTML ="Time remaining : " + seconds + " secs "+" LIFE : "+score+"%";
+					
+					 }
+				}, 1000);
+				
+		</script>
+		<p  id="demo"></p>
+		<div id="blocker">
+
+			<div id="instructions">
+				<span style="font-size:40px"><h1><< SHOOTER 2.0 >></h1><h5>" SHOOT the BOTS to save the YOU.... " </h5></span>
+		
+				(W, A, S, D = Move, SPACE = Jump, MOUSE = Look around, Click =Shoot)<br><br>
+				 > Every 5 SEC BOTS SUCK OUT your LIFE. <br>
+				 > Keep Track of your LIFE, TIME Kills IT .<br>
+				 > SHOOT the BOTS to INCREASE LIFE. 
+				
+			
+		
+				
+				<script>
+					document.getElementById("demo").style.display = 'none';
+					if(score!=0)
+					{
+						
+						document.getElementById("demo").innerHTML ="FINAL SCORE : "+score;	
+						
+					}
+				</script>
+				
+			</div>
+				
+		</div>
+
+		<script>
+			var camera, scene, renderer, controls;
+			var objects=[] ;
+			var raycaster;
+			var gunMesh;
+			
+			var loader;
+			var i=1,j=1;
+			var bullets = [];
+			var blocker = document.getElementById( 'blocker' );
+			var instructions = document.getElementById( 'instructions' );
+			
+			var mesh;
+			
+
+			
+			
+			// http://www.html5rocks.com/en/tutorials/pointerlock/intro/
+			var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+			if ( havePointerLock ) {
+				var element = document.body;
+				var pointerlockchange = function ( event ) {
+					if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+						controlsEnabled = true;
+						controls.enabled = true;
+						blocker.style.display = 'none';
+					} else {
+						controls.enabled = false;
+						blocker.style.display = 'block';
+						instructions.style.display = '';
+					}
+				};
+				var pointerlockerror = function ( event ) {
+					instructions.style.display = '';
+				};
+				// Hook pointer lock state change events
+				document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+				document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
+				document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
+				document.addEventListener( 'pointerlockerror', pointerlockerror, false );
+				document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
+				document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
+				//document.addEventListener( 'mouseDown', onDocumentMouseDown,false);
+					
+				instructions.addEventListener( 'click', function ( event ) {
+					instructions.style.display = 'none';
+					if(points==0)
+					{
+						score=100;
+						seconds=5;
+					}
+					// Ask the browser to lock the pointer
+					element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+					element.requestPointerLock();
+				}, false );
+			} else {
+				instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+			}
+			var raycaster = new THREE.Raycaster();
+			var mouse = new THREE.Vector2();
+				
+		
+			
+			init();
+			animate();
+			var controlsEnabled = false;
+			var moveForward = false;
+			var moveBackward = false;
+			var moveLeft = false;
+			var moveRight = false;
+			var canJump = false;
+			var fireBullet = false;
+			var prevTime = performance.now();
+			var velocity = new THREE.Vector3();
+			var direction = new THREE.Vector3();
+			var hit=false;
+			
+
+
+	
+			function init() {
+			
+			
+				
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xffffff );
+				scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
+				var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
+				light.position.set( 0.5, 10, 0.75 );
+				//scene.add( light );
+				controls = new THREE.PointerLockControls( camera );
+				scene.add( controls.getObject() );
+				
+			    loader = new THREE.ObjectLoader();
+			    loader.load(
+						'model/gun/gun.json',
+						function(object)
+						{ 
+							gunMesh=object; 
+							object.scale.set(2,2,2);
+							scene.add(object);
+						}
+					);
+					
+			
+					  loader.load(
+							'model/spaceship/spaceship.json',
+							function(spaceobject)
+							{
+								
+								spaceship1=spaceobject; 
+								spaceobject.scale.set(10,10,10);
+								scene.add(spaceobject);
+							}
+						);
+			
+				      loader.load(
+							'model/spaceship/spaceship.json',
+							function(spaceobject)
+							{
+								
+								spaceship2=spaceobject; 
+								spaceobject.scale.set(10,10,10);
+								scene.add(spaceobject);
+							}
+						);
+			 
+				var material = new THREE.LineBasicMaterial({ color: 0xAAFFAA });
+
+				
+						
+				var onKeyDown = function ( event ) {
+					switch ( event.keyCode ) {
+						case 38: // up
+						case 87: // w
+							moveForward = true;
+							break;
+						case 37: // left
+						case 65: // a
+							moveLeft = true; break;
+						case 40: // down
+						case 83: // s
+							moveBackward = true;
+							break;
+						case 39: // right
+						case 68: // d
+							moveRight = true;
+							break;
+						case 32: // space
+							if ( canJump === true ) velocity.y += 350;
+							canJump = false;
+							break;
+					}
+				};
+				
+				var onKeyUp = function ( event ) {
+					switch( event.keyCode ) {
+						case 38: // up
+						case 87: // w
+							moveForward = false;
+							break;
+						case 37: // left
+						case 65: // a
+							moveLeft = false;
+							break;
+						case 40: // down
+						case 83: // s
+							moveBackward = false;
+							break;
+						case 39: // right
+						case 68: // d
+							moveRight = false;
+							break;
+					}
+				};
+				
+				document.addEventListener( 'keydown', onKeyDown, false );
+				document.addEventListener( 'keyup', onKeyUp, false );
+				raycaster = new THREE.Raycaster( new THREE.Vector3(), new THREE.Vector3( 0, - 1, 0 ), 0, 10 );
+				// floor
+				var floorGeometry = new THREE.PlaneGeometry( 2000, 2000, 100, 100 );
+				
+				floorGeometry.rotateX( - Math.PI / 2 );
+				for ( var i = 0, l = floorGeometry.vertices.length; i < l; i ++ ) {
+					var vertex = floorGeometry.vertices[ i ];
+					vertex.x += Math.random() * 20 - 10;
+					vertex.y += Math.random() * 2;
+					vertex.z += Math.random() * 20 - 10;
+				}
+				for ( var i = 0, l = floorGeometry.faces.length; i < l; i ++ ) {
+					var face = floorGeometry.faces[ i ];
+					face.vertexColors[ 0 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+					face.vertexColors[ 1 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+					face.vertexColors[ 2 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+				}
+				var floorMaterial = new THREE.MeshBasicMaterial( { vertexColors: THREE.VertexColors } );
+				var floor = new THREE.Mesh( floorGeometry, floorMaterial );
+				scene.add( floor );
+				
+				// objects
+				var boxGeometry = new THREE.BoxGeometry( 20, 20, 20 );
+				
+				for ( var i = 0, l = boxGeometry.faces.length; i < l; i ++ ) {
+					var face = boxGeometry.faces[ i ];
+					face.vertexColors[ 0 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+					face.vertexColors[ 1 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+					face.vertexColors[ 2 ] = new THREE.Color().setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+				}
+				
+				for ( var i = 0; i < 500; i ++ ) {
+					var boxMaterial = new THREE.MeshPhongMaterial( { specular: 0xffffff, flatShading: true, vertexColors: THREE.VertexColors } );
+					boxMaterial.color.setHSL( Math.random() * 0.2 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+					var box = new THREE.Mesh( boxGeometry, boxMaterial );
+					box.position.x = Math.floor( Math.random() * 20 - 10 ) * 20;
+					box.position.y = Math.floor( Math.random() * 20 ) * 20 + 10;
+					box.position.z = Math.floor( Math.random() * 20 - 10 ) * 20;
+					scene.add( box );
+					objects.push( box );
+				}
+				//
+				
+				
+				//Center circle	
+				var cubeGeometry = new THREE.CircleGeometry(2, 100);
+				var cubeMaterial = new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide, transparent: true, opacity: 0.8, depthTest: false});
+				var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+				this.camera.add(cube)
+				cube.position.set( 0, 0, -100 );
+                
+				var geometry = new THREE.CircleGeometry( 3, 100 );
+				var material = new THREE.MeshBasicMaterial( { color: 0xff00ff } );
+				var circle = new THREE.Mesh( geometry, material );
+				this.camera.add(circle)				
+			    circle.position.set( 0, 0, -100 );
+			
+				
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
+				window.addEventListener( 'resize', onWindowResize, false );
+				
+				
+				
+				//aiming cyclinder
+				var aimCycgeometry = new THREE.CylinderGeometry( 5, 5, 2000, 32 );
+				var aimCycmaterial = new THREE.MeshBasicMaterial( {color: 0xffffff} );
+				var aimcylinder = new THREE.Mesh( aimCycgeometry, aimCycmaterial );
+				scene.add(aimcylinder);
+				this.camera.add(aimcylinder)				
+			    aimcylinder.position.set( 0, 0, 0 ); 
+				
+				
+			}
+			
+			function onMouseMove( event ) {
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+			}
+
+			window.addEventListener( 'mousemove', onMouseMove, false );
+			
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			
+			var onObject;
+			
+			function animate() {
+			
+			
+				requestAnimationFrame( animate );
+				
+				
+				
+				if ( controlsEnabled === true ) {
+				
+				
+				
+					raycaster.ray.origin.copy( controls.getObject().position );
+					raycaster.ray.origin.y -= 10;
+					var intersections = raycaster.intersectObjects(scene.children);
+					onObject = intersections.length > 0;
+					var time = performance.now();
+					var delta = ( time - prevTime ) / 1000;
+					velocity.x -= velocity.x * 10.0 * delta;
+					velocity.z -= velocity.z * 10.0 * delta;
+					velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+					direction.z = Number( moveForward ) - Number( moveBackward );
+					direction.x = Number( moveLeft ) - Number( moveRight );
+					direction.normalize(); // this ensures consistent movements in all directions
+					if ( moveForward || moveBackward ) velocity.z -= direction.z * 400.0 * delta;
+					if ( moveLeft || moveRight ) velocity.x -= direction.x * 400.0 * delta;
+					if ( onObject === true ) {
+						velocity.y = Math.max( 0, velocity.y );
+						canJump = true;
+					}
+					
+					if(score<0)
+					{
+						controlsEnabled = false;
+						document.getElementById("demo").innerHTML ="Final Points : "+points+"!!!";
+						instructions.style.display = 'block';
+						blocker.style.display = 'block';
+						
+						
+						
+					}
+					else
+					{
+						document.getElementById("demo").innerHTML ="Time remaining : " + seconds + " secs "+" LIFE : "+score+"%";
+						document.getElementById("demo").style.display = 'block';
+					}	
+									   
+					if(spaceship1.position.x>350||spaceship1.position.x<-350)
+					{
+							i=i*(-1);
+							spaceship1.position.z=(Math.floor(Math.random() * (300 - (-300))) -300);
+					}
+					spaceship1.position.x=spaceship1.position.x+i*(Math.floor(Math.random() * (5 - 1)) + 1);
+						 
+					if(spaceship2.position.z>350||spaceship2.position.z<-350)
+					{
+							j=j*(-1);
+							spaceship2.position.x=(Math.floor(Math.random() * (300 - (-300))) -300);
+					}
+					spaceship2.position.z=spaceship2.position.z+j*(Math.floor(Math.random() * (5 - 1)) + 1);
+					
+					
+					
+					
+					
+					//setting height
+					spaceship1.position.y=y1;
+					spaceship2.position.y=y2;
+					
+					//control change
+					controls.getObject().translateX( velocity.x * delta );
+					controls.getObject().translateY( velocity.y * delta );
+					controls.getObject().translateZ( velocity.z * delta );
+					
+					//gun change
+					gunMesh.rotation.set(controls.getObject().rotation.x,controls.getObject().rotation.y+Math.PI/2,controls.getObject().rotation.z);
+					gunMesh.position.set(controls.getObject().position.x+4,(controls.getObject().position.y-14),controls.getObject().position.z-1);	
+				    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+					
+					 
+					
+					
+					
+					if ( controls.getObject().position.y < 10 ) {
+								velocity.y = 0;
+								controls.getObject().position.y = 10;
+								canJump = true;
+							}
+							prevTime = time;
+						}
+							renderer.render( scene, camera );
+						}
+					   
+					function onDocumentMouseDown( event ) {    
+	
+	
+						//mouse click code comes here
+						var direction = new THREE.Vector3();
+						var raycasters = new THREE.Raycaster();
+
+						controls.getDirection( direction );
+						raycasters.set( controls.getObject().position, direction );
+						var ships= [spaceship1,spaceship2];
+						var intersectss = raycasters.intersectObjects( ships,true );
+						for ( var i = 0; i < intersectss.length; i++ ) {
+								points=points+50;
+								intersectss[i].object.material.color.set( 0xff0000 );
+								score++;
+								
+						}
+					
+					}
+											
+				          
+						
+		</script>
+	</body>
+</html>
